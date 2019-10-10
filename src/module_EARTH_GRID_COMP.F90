@@ -149,6 +149,9 @@
 #ifdef FRONT_GSDCHEM
       use FRONT_GSDCHEM,    only: GSDCHEM_SS  => SetServices
 #endif
+#ifdef FRONT_AQM
+      use FRONT_AQM,        only: AQM_SS  => SetServices
+#endif
   ! - Mediator
       use module_MEDIATOR,        only: MED_SS     => SetServices
       use module_MEDSpaceWeather, only: MEDSW_SS   => SetServices
@@ -3183,6 +3186,54 @@
           return  ! bail out
       endif
 
+      if (.not.NUOPC_FieldDictionaryHasEntry( &
+        "inst_aerodynamic_conductance")) then
+        call NUOPC_FieldDictionaryAddEntry( &
+          standardName="inst_aerodynamic_conductance", &
+          canonicalUnits="m s-1", &
+          rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__)) &
+          return  ! bail out
+      endif
+
+      if (.not.NUOPC_FieldDictionaryHasEntry( &
+        "inst_canopy_resistance")) then
+        call NUOPC_FieldDictionaryAddEntry( &
+          standardName="inst_canopy_resistance", &
+          canonicalUnits="m s-1", &
+          rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__)) &
+          return  ! bail out
+      endif
+
+      if (.not.NUOPC_FieldDictionaryHasEntry( &
+        "inst_cloud_frac_levels")) then
+        call NUOPC_FieldDictionaryAddEntry( &
+          standardName="inst_cloud_frac_levels", &
+          canonicalUnits="1", &
+          rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__)) &
+          return  ! bail out
+      endif
+
+      if (.not.NUOPC_FieldDictionaryHasEntry( &
+        "leaf_area_index")) then
+        call NUOPC_FieldDictionaryAddEntry( &
+          standardName="leaf_area_index", &
+          canonicalUnits="1", &
+          rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__)) &
+          return  ! bail out
+      endif
+
       ! Dummy fields
 
       if (.not. NUOPC_FieldDictionaryHasEntry( &
@@ -3747,6 +3798,19 @@
           elseif (trim(model) == "gsdchem") then
 #ifdef FRONT_GSDCHEM
             call NUOPC_DriverAddComp(driver, trim(prefix), GSDCHEM_SS, &
+              petList=petList, comp=comp, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, file=trim(name)//":"//__FILE__)) return  !  bail out
+#else
+            write (msg, *) "Model '", trim(model), "' was requested, "// &
+              "but is not available in the executable!"
+            call ESMF_LogSetError(ESMF_RC_NOT_VALID, msg=msg, line=__LINE__, &
+              file=__FILE__, rcToReturn=rc)
+            return  ! bail out
+#endif
+          elseif (trim(model) == "aqm") then
+#ifdef FRONT_AQM
+            call NUOPC_DriverAddComp(driver, trim(prefix), AQM_SS, &
               petList=petList, comp=comp, rc=rc)
             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
               line=__LINE__, file=trim(name)//":"//__FILE__)) return  !  bail out
